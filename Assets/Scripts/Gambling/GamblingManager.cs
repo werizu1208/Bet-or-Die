@@ -48,11 +48,9 @@ public class GamblingManager : MonoBehaviour
     public void ResolveResult(bool playerWon, float gameMultiplier)
     {
         // スキルによる保険チェック
-        bool insuranceUsed = false;
         if (!playerWon && SkillManager.Instance.HasSkill(SkillEffectType.BetInsurance))
         {
             SkillManager.Instance.ConsumeOneTimeSkill(SkillEffectType.BetInsurance);
-            insuranceUsed = true;
             playerWon = true;
             gameMultiplier = 1f;
         }

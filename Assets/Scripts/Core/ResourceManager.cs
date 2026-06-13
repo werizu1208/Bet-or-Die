@@ -15,7 +15,6 @@ public class ResourceManager : MonoBehaviour
 
     public event Action OnResourceChanged;
     public event Action OnGameOver;
-    public event Action<string> OnGoldDepletionWarning;
 
     void Awake()
     {

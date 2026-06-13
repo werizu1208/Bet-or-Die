@@ -16,7 +16,7 @@ public class DiceController : MonoBehaviour
     {
         foreach (var die in dice)
         {
-            die.linearVelocity = Vector3.zero;
+            die.velocity = Vector3.zero;
             die.angularVelocity = Vector3.zero;
             die.AddForce(new Vector3(
                 UnityEngine.Random.Range(-1f, 1f),
@@ -37,7 +37,7 @@ public class DiceController : MonoBehaviour
             bool allSettled = true;
             foreach (var die in dice)
             {
-                if (die.linearVelocity.magnitude > settleVelocityThreshold ||
+                if (die.velocity.magnitude > settleVelocityThreshold ||
                     die.angularVelocity.magnitude > settleVelocityThreshold)
                 {
                     allSettled = false;
