@@ -6,33 +6,210 @@ Unity gambling/survival game. The player faces demons and chooses to bet or refu
 ## Core Concept
 - **Title:** Bet or Die
 - **Genre:** Gambling / Survival
-- **Engine:** Unity
-- **Status:** Pre-production (concept only, no code yet)
+- **Engine:** Unity (1人称 3D)
+- **Status:** Pre-production（コア仕様確定済み、実装未着手）
 - **Repository:** GitHub (shared across two PCs — always pull before working)
 
+---
+
 ## Resource System
-Three resource pools, consumed **left to right in this priority order:**
 
-| Priority | Resource | Notes |
-|----------|----------|-------|
-| 1st | 金 (Money) | Spent first |
-| 2nd | HP | Spent second |
-| 3rd | 四肢 (Limbs) | Spent last — losing limbs likely has permanent gameplay consequences |
+| リソース | 初期値 | 単位価値 |
+|---------|--------|--------|
+| 金 | 500G | 1G |
+| 寿命 | 80year | 1year = 100G |
+| 四肢 | 5本 | 1本 = 1000G |
 
-The ordering is intentional: the player starts losing money, then health, then body parts — escalating stakes.
+- 四肢の内訳：右腕・右足・左腕・左足・頭
+- 変換方向：四肢→寿命→金のみ可（逆は一部イベントのみ）
+- 変換タイミング：任意（複雑になるなら端数切り上げに切り替え）
+- 寿命・四肢は初期値が上限（ギャンブルで勝っても超えない）、金は上限なし
+
+### 四肢の制約
+- 両腕喪失 → カード系ギャンブル不可
+- 両足喪失 → レース系ギャンブル不可
+- 片腕・片足のみ喪失 → ペナルティなし
+
+---
 
 ## Gameplay Loop
-1. Player encounters a demon
-2. Player chooses: **Bet** or **Refuse**
-3. If betting: wager resources, resolve the gamble
-4. Repeat until the player **escapes** or loses everything
 
-## Key Design Questions (not yet decided)
-- What determines win/loss probability per demon?
-- What happens when all limbs are lost (game over? special state?)
-- How many demons / stages before escape?
-- Is there a roguelike structure (run-based) or a single narrative playthrough?
-- Can the player refuse indefinitely, or does refusal have a cost?
+画面遷移：スタート → 説明 → ゲーム画面
+
+- ターン制、1人称3D、部屋を1つずつ進む
+- 各部屋で悪魔が「BET or DIE?」＋事前倍率を提示
+- プレイヤーはBETかDIEを選択
+
+---
+
+## BET
+
+- 悪魔がランダムで「金」か「寿命」のどちらを賭けるか指定
+  - 寿命指定の確率は低め、ステージ進行で上昇
+- ベット額：最低額は強制（ステージ進行で上昇）、上限内でプレイヤーが任意設定
+- 勝ち：ベット額 × 事前倍率 × ゲーム内結果倍率 を獲得
+  - 上限超過分は下位リソースに変換（寿命→金、四肢→寿命→金）
+- 負け：ベット額のみ失う（倍率乗算なし）
+- 金が尽きてベット時：警告ダイアログ（Yes/No）で任意変換
+
+---
+
+## DIE
+
+- 寿命10yearを消費して次の部屋へ進む（暫定値、レベルデザインで調整）
+- ステージ進行でDIE消費量も増加
+- 寿命0のとき選択 → 悪魔がランダムで四肢を1本奪う
+- 頭のみ残っている状態でDIE → 即ゲームオーバー
+- インゲームで寿命が0になった場合はステージクリアまで猶予あり
+  - クリア前に寿命を回復できればゲームオーバー回避可能
+
+---
+
+## ゲームオーバー条件
+
+- 四肢（頭含む）をすべて失う
+- 頭を賭けて負ける
+- DIEで頭しか残っていない状態で選択
+- ステージクリア時に寿命が0
+
+---
+
+## 倍率システム
+
+### 事前倍率
+- BET or DIE選択画面で表示（意思決定の判断材料）
+- 悪魔の性格・ステージ・ギャンブル種目によって変動
+
+| ステージ | 事前倍率の範囲 |
+|----------|--------------|
+| Stage 1〜2 | ×1.1 〜 ×1.5 |
+| Stage 3〜5 | ×1.5 〜 ×3.0 |
+| Stage 6〜  | ×2.0 〜 ×10.0 |
+
+### 倍率と勝率の連動
+| 事前倍率 | 勝率補正 |
+|----------|----------|
+| ×1.0〜×1.5 | 補正なし |
+| ×1.5〜×3.0 | -5% |
+| ×3.0〜×6.0 | -10% |
+| ×6.0〜    | -15% |
+
+### 計算式
+- 勝ち：ベット額 × 事前倍率 × ゲーム内結果倍率
+- 負け：ベット額のみ失う
+
+---
+
+## ギャンブル種目（7種）
+
+| 種目 | 分類 | 備考 |
+|------|------|------|
+| ブラックジャック | カード系 | 両腕喪失で不可 |
+| バカラ | カード系 | 両腕喪失で不可 |
+| チンチロ | ダイス系 | Unity物理エンジン使用 |
+| 丁半 | ダイス系 | Unity物理エンジン使用 |
+| 動物レース | レース系 | 両足喪失で不可 |
+| ルーレット | その他 | 0〜36 |
+| スロット | その他 | 3リール |
+
+### 各種目のゲーム内倍率
+
+**ブラックジャック**
+- 通常勝ち：×1 / ブラックジャック（2枚で21）：×1.5
+- 悪魔は16以下ヒット強制、17以上スタンド強制
+
+**バカラ**
+- プレイヤー勝ち：×2 / バンカー勝ち：×2 / タイ：×8
+- コミッション（手数料）なし
+
+**チンチロ**
+| 役 | 条件 | 倍率 |
+|----|------|------|
+| ピンゾロ | 1-1-1 | ×5 |
+| シゴロ | 4-5-6 | ×3 |
+| ゾロ目 | 同じ目3つ（ピンゾロ除く） | ×2 |
+| 目あり | ペア＋別の目 | ×1 |
+| ヒフミ | 1-2-3 | 負け |
+| 目なし | 役なし | 負け |
+
+**丁半**
+- 丁（偶数）か半（奇数）を予想：×2
+- ゾロ目が出た場合：悪魔総取り（的中でも没収）
+
+**動物レース**
+- 4体の使い魔がレース、単勝のみ
+- オッズ例：×1.5 / ×2 / ×3 / ×6
+
+**ルーレット**
+| 賭け方 | 倍率 |
+|--------|------|
+| 数字1点 | ×35 |
+| 赤/黒 | ×2 |
+| 奇数/偶数 | ×2 |
+| 1〜18/19〜36 | ×2 |
+- 0が出た場合：悪魔総取り
+
+**スロット**
+| 結果 | 倍率 |
+|------|------|
+| 悪魔3つ揃い | ×10 |
+| その他3つ揃い | ×3 |
+| 2つ揃い | ×1.5 |
+| 揃いなし | 負け |
+
+---
+
+## 悪魔（4種）
+
+| 名前 | 性格 | リスク傾向 | 担当ギャンブル | 倍率選択 |
+|------|------|-----------|--------------|--------|
+| アモン | 好戦的 | ハイリスクハイリターン | バカラ・ルーレット | レンジの上半分から抽選 |
+| ストラス | 臆病 | ローリスクローリターン | 丁半・ブラックジャック | レンジの下半分から抽選 |
+| マモン | 勝負師 | 金=ミドル／寿命=ハイリスクハイリターン | 動物レース・チンチロ | 金ベット時はレンジ中央、寿命強制時は最低額が跳ね上がりリターンも増大 |
+| ベルフェゴール | 怠け者 | ローリスクミドルリターン | スロット・動物レース | レンジの下〜中央から抽選 |
+
+---
+
+## ステージ構造（ローグライク）
+
+- 部屋数：8 / 12 / 16 / 20 からランダム
+  - 少ない部屋数 → 最低ベット額が高い・DIE消費が重い
+- クリア条件：Stage1=2000G、以降ステージごとに倍（4000G→8000G→…）
+- イベント部屋：約4部屋ごとに確率抽選
+  - 確率：15%→30%→45%→60%→70%（上限）、発生時にリセット
+  - 内容：回復 or 恒久スキル獲得（詳細未定）
+  - スキルはクリアまたはゲームオーバーまで継続
+
+---
+
+## エンディング
+
+- ステージ上限なし（エンドレス）
+- 3ステージクリア後、各ステージクリアごとに「逃げる」選択肢が出現
+  - 逃げる → 正規クリア、獲得金額表示で現世に帰還
+  - 続行 → 次ステージへ
+- 7〜8ステージ到達 → 悪魔が人間を追放する特殊演出エンド
+- 3ステージ以降でゲームオーバー → 部分クリアなし、純粋なゲームオーバー
+- Stage1〜2で逃げようとすると悪魔に捕まり強制続行（演出）
+
+---
+
+## 実装方針
+
+- 全パラメータは **ScriptableObject** で管理、UnityのInspectorから変更可能
+- データファイル構成例：
+  - `GameConfig`（全体設定・リソース初期値）
+  - `StageConfig`（ステージごとの倍率範囲・最低ベット額・DIE消費量）
+  - `DemonData`（悪魔ごとの設定）
+  - `BlackjackData` / `RouletteData` 等（各ギャンブルの数値）
+
+---
+
+## 未定義項目（残り）
+- イベント部屋のスキル内容
+- 寿命ベット確率の具体値（ステージごとの増加量）
+
+---
 
 ## Workflow
 - Unity project, version controlled via GitHub
@@ -41,7 +218,7 @@ The ordering is intentional: the player starts losing money, then health, then b
 - Prefer small, focused commits
 
 ## For Claude on a New Machine
-1. Read this file first
+1. Read this file first — full spec is written here
 2. Check `git log --oneline -10` to see recent changes
 3. Ask the user what they want to work on today
 4. Do not assume any code exists — verify with file search before referencing implementation details
