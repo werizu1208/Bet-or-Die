@@ -241,3 +241,42 @@ Unity gambling/survival game. The player faces demons and chooses to bet or refu
 2. Check `git log --oneline -10` to see recent changes
 3. Ask the user what they want to work on today
 4. Do not assume any code exists — verify with file search before referencing implementation details
+
+---
+
+## 実装進捗ログ
+
+### 2026-06-13 — 仕様確定 & 全スクリプト実装完了
+
+**完了したこと**
+- コア仕様すべて確定（リソース・BET/DIE・倍率・ステージ・ギャンブル7種・悪魔4体・スキル13種・イベント部屋6種・エンディング）
+- 全46スクリプト・ScriptableObjectを実装しGitHubにコミット済み
+- コンパイルエラー3件修正済み
+  - `DiceController.cs`: `linearVelocity` → `velocity`（Unity旧バージョン対応）
+  - `GamblingManager.cs`: 未使用変数 `insuranceUsed` を削除
+  - `ResourceManager.cs`: 未使用イベント `OnGoldDepletionWarning` を削除
+- UIManager 全13フィールドの内部構造・子要素・アンカー配置を設計済み
+
+**実装済みスクリプト一覧**
+```
+Assets/Scripts/
+  Data/         GameEnums, GameConfig, StageConfig, DemonData, SkillData
+                BlackjackData, BaccaratData, ChinchiroData, ChoHanData,
+                AnimalRaceData, RouletteData, SlotData, GamblingGameData
+  Core/         GameManager, ResourceManager, StageManager
+  Room/         RoomController, DemonController, DieController, BetController
+  Gambling/     GamblingManager, DiceController,
+                BlackjackGame, BaccaratGame, ChinchiroGame, ChoHanGame,
+                AnimalRaceGame, RouletteGame, SlotGame
+  Skills/       SkillManager
+  Events/       EventRoomController
+  Endings/      EndingController
+  UI/           UIManager, GamblingUI, ResourceUI, LimbUI, BetUI
+  SceneController
+```
+
+**次のステップ（未着手）**
+1. UnityエディタでSceneを構築（Canvas / UIオブジェクト作成 → UIManagerにアサイン）
+2. ScriptableObjectインスタンスを `Assets/Data/` に作成し数値を入力
+3. 基本フローの動作確認（StartScreen → BetOrDie → Gambling → StageEnd）
+4. 各ギャンブルゲームのUI実装（カード・サイコロ・スロット等）
