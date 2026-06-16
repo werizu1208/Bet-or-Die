@@ -1,0 +1,36 @@
+# Unity generated
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Unity cache
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Crash reports
+sysinfo.txt
+
+# Visual Studio
+.vs/
+*.csproj
+*.sln
+*.unityproj
+*.suo
+*.user
+*.pidb
+*.booproj
+ExportedObj/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# JetBrains
+.idea/
+*.DotSettings.user
