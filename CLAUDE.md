@@ -244,6 +244,98 @@ Unity gambling/survival game. The player faces demons and chooses to bet or refu
 
 ---
 
+## UI配置設計（2026-06-16確定）
+
+### Canvas設定
+- Render Mode: Screen Space - Overlay
+- UIManager.cs をCanvasにアタッチ、全パネルの参照をInspectorからアサイン
+
+### パネル一覧（UIManager [Panels] セクション順）
+
+| # | フィールド名 | サイズ／位置 | 初期状態 |
+|---|-------------|-------------|---------|
+| 1 | startScreenPanel | フルスクリーン（Stretch） | Active |
+| 2 | explanationPanel | フルスクリーン（Stretch） | Inactive（中身未実装・将来ハイライト型チュートリアル予定） |
+| 3 | betOrDiePanel | 中央 W:360 H:280 | Inactive |
+| 4 | bettingPanel | 中央 W:380 H:220 | Inactive |
+| 5 | gamblingPanel | フルスクリーン（Stretch） | Inactive |
+| 6 | eventRoomPanel | 中央 W:400 H:320 | Inactive |
+| 7 | stageEndPanel | 中央 W:360 H:260 | Inactive |
+| 8 | gameOverPanel | フルスクリーン（Stretch） | Inactive |
+| 9 | victoryPanel | フルスクリーン（Stretch） | Inactive |
+| 10 | demonBanishmentPanel | フルスクリーン（Stretch） | Inactive |
+| 11 | goldDepletionDialogPanel | 中央 W:300 H:160 | Inactive（ShowGoldDepletionDialog()で制御） |
+
+### HUD（UIManager [HUD] セクション）
+
+| フィールド名 | コンポーネント | 位置 | 子要素 |
+|-------------|--------------|------|--------|
+| resourceUI | ResourceUI.cs | 左上固定（Anchor: top-left） W:140 H:100 | TMP×4（goldText / lifespanText / stageText / roomText） |
+| limbUI | LimbUI.cs | 右中央固定（Anchor: middle-right） W:70 H:140 | Image×5（RightArm / LeftArm / RightLeg / LeftLeg / Head）欠損時に暗転 |
+
+### 各パネルの主要子要素
+
+**1. startScreenPanel**
+- TextMeshProUGUI: タイトル「Bet or Die」（中央上）
+- TextMeshProUGUI: サブタイトル（中央）
+- Button: スタート → SceneController.GoToGame()（中央下）
+
+**2. explanationPanel** — 中身未実装、GameObjectのみ配置
+
+**3. betOrDiePanel**
+- TextMeshProUGUI: 悪魔名（中央）← UIで表示するのはこれのみ
+- ※BET/DIE選択肢は3Dプレハブで実装（UI構築完了後に着手予定）
+
+**4. bettingPanel**
+- TextMeshProUGUI: 通貨＋事前倍率ラベル（上部）
+- TextMeshProUGUI: 現在のベット額（中央大）
+- Slider: ベット額調整（min〜max）
+- TMP_InputField: 手入力用（任意）
+- Button: 確定 → BetController.ConfirmBet()（下部）
+
+**5. gamblingPanel**
+- GamblingUI.cs をこのパネルにアタッチ
+- 子Panel×7（デフォルト全Inactive、GamblingUI.ShowGame()で切替）:
+  BlackjackPanel / BaccaratPanel / ChinchiroPanel / ChoHanPanel / AnimalRacePanel / RoulettePanel / SlotsPanel
+
+**6. eventRoomPanel**
+- Image: イベントアイコン（中央上）
+- TextMeshProUGUI: イベント名（中央）
+- TextMeshProUGUI: イベント説明（中央）
+- Button: アクション（イベント種別で動的テキスト変更） → EventRoomController
+- Button: スキップ/閉じる
+
+**7. stageEndPanel**
+- TextMeshProUGUI: 「Stage X Clear!」バッジ（上部）
+- TextMeshProUGUI: 現在の金額（中央）
+- TextMeshProUGUI: 次ステージ目標金額（中央）
+- Button: 逃げる → EndingController.TriggerEscape()（左下、Stage3以降のみ表示）
+- Button: 続行 → GameManager.ChangeState()（右下）
+
+**8. gameOverPanel**
+- TextMeshProUGUI: 「Game Over」（赤、中央上）
+- TextMeshProUGUI: 獲得金額（中央）
+- Button: タイトルへ → SceneController.GoToStart()（中央下）
+
+**9. victoryPanel**
+- TextMeshProUGUI: 「Escape!」バッジ（上部）
+- TextMeshProUGUI: 稼いだ金額（中央）
+- TextMeshProUGUI: クリアステージ数（中央）
+- Button: タイトルへ → SceneController.GoToStart()（中央下）
+
+**10. demonBanishmentPanel**
+- Image: 悪魔ポートレート大（中央上）
+- TextMeshProUGUI: 悪魔の台詞（イタリック）
+- Button: タイトルへ → SceneController.GoToStart()（中央下）
+
+**11. goldDepletionDialogPanel**
+- TextMeshProUGUI: 警告テキスト（黄色）
+- TextMeshProUGUI: 変換内容説明
+- Button: Yes → BetController.ConfirmConversionAndBet()（左）
+- Button: No → UIManager.HideGoldDepletionDialog()（右）
+
+---
+
 ## 実装進捗ログ
 
 ### 2026-06-13 — 仕様確定 & 全スクリプト実装完了
@@ -280,3 +372,12 @@ Assets/Scripts/
 2. ScriptableObjectインスタンスを `Assets/Data/` に作成し数値を入力
 3. 基本フローの動作確認（StartScreen → BetOrDie → Gambling → StageEnd）
 4. 各ギャンブルゲームのUI実装（カード・サイコロ・スロット等）
+
+**未着手・保留中**
+- ExplanationPanel: パネルのGameObjectは作成するが中身は未実装。将来的にハイライト型チュートリアル（ゲーム画面上に矢印・フキダシを重ねて順番に操作説明するタイプ）を実装予定。
+- BetOrDiePanel の3D化（UIの構築完了後に着手）:
+  - BetOrDiePanel は悪魔名TMPのみ残す
+  - BET/DIE選択肢を3Dプレハブに変更（BetChoice×7種 / DieChoice×2種）
+  - 悪魔の手の上にスポーンしクリックで選択
+  - 新規: ChoiceObject.cs / ChoicePrefabRegistry.cs
+  - 変更: DemonController / BetController / DieController
